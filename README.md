@@ -15,4 +15,4 @@
 #### Link do Wokwi do projeto: https://wokwi.com/projects/382308808549410817
 ##### Projeto produzido por: 
 + Felipe Cavalcante Bressane -- rm97688
-+ + Kaique Maia Reis Silva - rm552112
++  Kaique Maia Reis Silva - rm552112
