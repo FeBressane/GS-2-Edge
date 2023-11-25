@@ -1,1 +1,122 @@
+#include "ArduinoJson.h"
+#include "EspMQTTClient.h"
+#include "LiquidCrystal.h"
+
+EspMQTTClient client{
+  "Wokwi-GUEST", // SSID do WiFi
+  "",             // Senha do wifi
+  "mqtt.tago.io",  // Endereço do servidor
+  "Default",       // Usuario
+  "65060ee2-215e-49e4-8fb1-7e8b1f2cdf70", // Token do device
+  "esp",         // Nome do device
+  1883            // Porta de comunicação
+};
+
+int ledverde = 35;   // Led Verde
+int ledamarelo = 34;  // Led Amarelo
+int ledvermelho = 32; // Led Vermelho
+int buzzer = 4;     // Variável do piezo
+int LDR = 2;       // Fotorresistor
+int valorLDR = 0;    // Vai ler as informações do LDR (LDR = 0)
+
+const int analogIn = 15; // Sensor de Temperatura
+int umidade = 1;        // Sensor de Umidade
+int ValorBruto = 0;     // Valor Bruto
+double Voltagem = 0;    // Voltagem
+double tempC = 0;       // Temperatura em °C
+
+int ledvermelhoT = 23;   // Led de Temperatura
+int ledamareloT = 22;    // Led de Temperatura
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(ledverde, OUTPUT);    // Led Verde(Receber informação)
+  pinMode(ledamarelo, OUTPUT);  // Led Amarelo(Receber informação)
+  pinMode(ledvermelho, OUTPUT); // Led Vermelho(Receber informação)
+  pinMode(LDR, INPUT);          // Fotorresistor(Enviar informação)
+  pinMode(buzzer, OUTPUT);       // Piezo(Receber informação)
+  pinMode(analogIn, INPUT);     // Temperatura(Enviar informação)
+  pinMode(ledamareloT, OUTPUT);  // Led Amarelo Temp.(Receber informação)
+  pinMode(ledvermelhoT, OUTPUT); // Led Vermelho Temp.(Receber informação)
+}
+
+void loop() {
+  valorLDR = analogRead(LDR); // Vai ler o LDR e armazenar no valorLDR
+
+  // Luminosidade adequada (LED VERDE)
+  if (valorLDR < 100) {
+    digitalWrite(ledvermelho, LOW);
+    digitalWrite(ledamarelo, LOW);
+    digitalWrite(ledverde, HIGH);
+    noTone(buzzer);
+    Serial.println("Luminosidade: Adequada");
+  }
+
+  // Luminosidade em alerta (LED AMARELO)
+  else if (valorLDR >= 100 && valorLDR <= 150) {
+    digitalWrite(ledvermelho, LOW);
+    digitalWrite(ledamarelo, HIGH);
+    digitalWrite(ledverde, LOW);
+    noTone(buzzer);
+    Serial.println("Luminosidade: Ambiente a meia luz");
+  }
+
+  // Problema de luminosidade (LED VERMELHO)
+  else {
+    digitalWrite(ledvermelho, HIGH);
+    digitalWrite(ledamarelo, LOW);
+    digitalWrite(ledverde, LOW);
+    tone(buzzer, 1000);
+    delay(valorLDR);
+    Serial.print("Luminosidade: ");
+    Serial.println(valorLDR);
+    Serial.println("Ambiente muito claro");
+  }
+
+  // Sensor de Temperatura
+  ValorBruto = analogRead(analogIn);
+  Voltagem = (ValorBruto / 4095.0) * 5000; // 4095 para obter milivots.
+  tempC = (Voltagem - 500) / 10.0;
+
+  if (tempC >= 10 && tempC <= 15) {
+    digitalWrite(ledvermelhoT, LOW);
+    digitalWrite(ledamareloT, LOW);
+    noTone(buzzer);
+  }
+
+  else if (tempC > 16) {
+    digitalWrite(ledvermelhoT, HIGH);
+    digitalWrite(ledamareloT, LOW);
+    tone(buzzer, 2000);
+    Serial.print("Temp. Alta: ");
+    Serial.println(tempC);
+  }
+
+  else if (tempC < 9) {
+    digitalWrite(ledamareloT, HIGH);
+    digitalWrite(ledvermelhoT, LOW);
+    Serial.print("Temp. Baixa: ");
+    Serial.println(tempC);
+  }
+
+  // Sensor de Umidade (Potenciômetro)
+  umidade = analogRead(1);
+  Serial.print("Umidade = ");
+  Serial.print(map(umidade, 0, 4095, 0, 100));
+  Serial.println("%");
+
+  if (umidade >= 50 && umidade <= 70) {
+    Serial.println("Umidade OK");
+  }
+
+  else if (umidade < 50) {
+    Serial.println("Umidade baixa");
+  }
+
+  else if (umidade > 70) {
+    Serial.println("Umidade alta");
+  }
+
+  delay(5000);
+}
 
